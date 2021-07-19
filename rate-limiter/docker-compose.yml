@@ -1,0 +1,21 @@
+services:
+
+  rate-limiter:
+    image: nginx:1.21.0-alpine
+    container_name: rate-limiter
+    hostname: rate-limiter
+    volumes:
+     - ./templates:/etc/nginx/templates
+    ports:
+     - '83:83'
+    environment:
+     - NGINX_PORT=83
+     - APP_NAME=rate-limiter
+     - COLOR=#DCDCDC
+    networks:
+      - nginx-playground-network
+
+networks:
+  nginx-playground-network:
+    name: nginx-playground-network
+    external: true

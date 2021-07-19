@@ -1,0 +1,56 @@
+# http section
+
+server_tokens off; # for security reasons you should not show your nginx version in the response headers
+
+limit_req_zone $binary_remote_addr zone=app1limit:10m rate=20r/m;
+limit_req_zone $binary_remote_addr zone=app2limit:10m rate=1r/s;
+
+server {
+
+    listen ${NGINX_PORT};
+    server_name localhost;
+
+    # logs with anonymized ip address
+    access_log /var/log/nginx/access.log anonymized;
+
+    add_header X-XSS-Protection "1; mode=block";
+
+    # docker network and variables for unavailable hosts
+    # use ip adress of the defined docker network gateway
+    resolver 127.0.0.11 ipv6=off;
+    set $app_one http://172.99.0.1:8081;
+    set $app_two http://172.99.0.1:8082;
+    set $app_three http://172.99.0.1:8083;
+
+    # every location routes to this page (epxect the routes defined below)
+    location / {
+        default_type text/html; # needed because we directly return html text
+        return 200 "<!DOCTYPE html>
+                     <body style=\"width:600px;\">
+                       <h3 style=\"background-color:${COLOR};\">Hello from ${APP_NAME}</h3>
+                       <ul>
+                         <li><a href=\"/app1\" style=\"color: #2863C8\">App One with 30 requests per minute and burst 10 without delay rate limit</a></li>
+                         <li><a href=\"/app2\" style=\"color: #2863C8\">App Two with 1 requests per second rate limit</a></li>
+                         <li><a href=\"/app3\" style=\"color: #2863C8\">App Three without rate limit</a></li>
+                       </ul>
+                     </body>\n";
+    }
+
+    location = /app1 {
+        proxy_pass $app_one;
+        proxy_redirect off;
+        limit_req zone=app1limit burst=10 nodelay;
+    }
+
+    location = /app2 {
+        proxy_pass $app_two;
+        proxy_redirect off;
+        limit_req zone=app2limit;
+    }
+
+    location = /app3 {
+        proxy_pass $app_three;
+        proxy_redirect off;
+    }
+
+}

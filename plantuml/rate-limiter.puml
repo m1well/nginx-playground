@@ -1,0 +1,67 @@
+@startuml
+
+!$port_reverse_proxy = ":81"
+!$port_load_balancer = ":82"
+!$port_rate_limiter = ":83"
+!$port_dummy_1 = ":8081"
+!$port_dummy_2 = ":8082"
+!$port_dummy_3 = ":8083"
+
+title rate limiter
+
+skinparam roundcorner 10
+skinparam title {
+  fontsize 23
+  fontstyle bold
+}
+skinparam arrow {
+  color crimson
+  fontsize 14
+  fontcolor crimson
+  fontstyle italic
+}
+skinparam cloud {
+  backgroundcolor white
+  fontsize 14
+}
+skinparam frame {
+  backgroundcolor white
+  fontsize 14
+}
+skinparam artifact {
+  backgroundcolor skyblue
+  fontsize 17
+  fontstyle bold
+}
+
+cloud "172.99.0.1" as cloud {
+
+  frame "$port_rate_limiter" as rate_limiter {
+    artifact "nginx" as app_rate_limiter
+  }
+
+  interface "limit app 1" as limit_app_1
+
+  frame "$port_dummy_1" as dummy_1 {
+    artifact "dummy app 1" as app_dummy_1
+  }
+
+    interface "limit app 2" as limit_app_2
+
+  frame "$port_dummy_2" as dummy_2 {
+    artifact "dummy app 2" as app_dummy_2
+  }
+
+  frame "$port_dummy_3" as dummy_3 {
+    artifact "dummy app 3" as app_dummy_3
+  }
+
+}
+
+[app_rate_limiter] <-down-> [limit_app_1] : location /app1
+[app_rate_limiter] <-down-> [limit_app_2] : location /app2
+[app_rate_limiter] <-down-> [app_dummy_3] : location /app3
+[limit_app_1] <-down-> [app_dummy_1]
+[limit_app_2] <-down-> [app_dummy_2]
+
+@enduml

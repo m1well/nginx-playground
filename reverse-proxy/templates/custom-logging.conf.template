@@ -1,0 +1,2 @@
+# custom log format
+log_format custom '[$time_local] $remote_addr "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent"';

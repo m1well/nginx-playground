@@ -1,0 +1,96 @@
+# http section
+
+server_tokens off; # for security reasons you should not show your nginx version in the response headers
+
+upstream round-robin-upstream {
+    # use ip adress of the defined docker network gateway
+    server 172.99.0.1:8081;
+    server 172.99.0.1:8082;
+    server 172.99.0.1:8083;
+}
+
+upstream with-weights-upstream {
+    # use ip adress of the defined docker network gateway
+    server 172.99.0.1:8081;
+    server 172.99.0.1:8082 weight=10;
+    server 172.99.0.1:8083 weight=5;
+}
+
+upstream least-connection-upstream {
+    # use ip adress of the defined docker network gateway
+    least_conn;
+    server 172.99.0.1:8081;
+    server 172.99.0.1:8082;
+    server 172.99.0.1:8083;
+}
+
+upstream hash-upstream {
+    # use ip adress of the defined docker network gateway
+    hash $remote_addr$remote_port consistent;
+    server 172.99.0.1:8081;
+    server 172.99.0.1:8082;
+    server 172.99.0.1:8083;
+}
+
+server {
+
+    listen ${NGINX_PORT};
+    server_name localhost;
+
+    # logs with anonymized ip address
+    access_log /var/log/nginx/access.log anonymized;
+
+    add_header X-XSS-Protection "1; mode=block";
+
+    # docker network and variables for unavailable hosts
+    resolver 127.0.0.11 ipv6=off;
+    set $round_robin http://round-robin-upstream;
+    set $with_weights http://with-weights-upstream;
+    set $least_connection http://least-connection-upstream;
+    set $hash http://hash-upstream;
+
+    proxy_pass_request_headers on;
+    proxy_set_header proxyby nginx-proxy;
+    proxy_set_header Referer $http_referer;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Host $server_name;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+    # only the "/" location routes to this page, for others there is an nginx error (epxect the routes defined below)
+    location = / {
+        default_type text/html; # needed because we directly return html text
+        return 200 "<!DOCTYPE html>
+                     <body style=\"width:600px;\">
+                       <h3 style=\"background-color:${COLOR};\">Hello from ${APP_NAME}</h3>
+                       <ul>
+                         <li><a href=\"/balanced1\" style=\"color: #2863C8\">Apps balanced: 'round-robin'</a></li>
+                         <li><a href=\"/balanced2\" style=\"color: #2863C8\">Apps balanced: 'with-weights'</a></li>
+                         <li><a href=\"/balanced3\" style=\"color: #2863C8\">Apps balanced: 'least-connection'</a></li>
+                         <li><a href=\"/balanced4\" style=\"color: #2863C8\">Apps balanced: 'hash'</a></li>
+                       </ul>
+                     </body>\n";
+    }
+
+    location /balanced1 {
+        proxy_pass $round_robin;
+        proxy_redirect off;
+    }
+
+    location /balanced2 {
+        proxy_pass $with_weights;
+        proxy_redirect off;
+    }
+
+    location /balanced3 {
+        proxy_pass $least_connection;
+        proxy_redirect off;
+    }
+
+    location /balanced4 {
+        proxy_pass $hash;
+        proxy_redirect off;
+    }
+
+}

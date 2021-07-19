@@ -1,0 +1,51 @@
+services:
+
+  app-one:
+    image: nginx:1.21.0-alpine
+    container_name: app-one
+    hostname: app-one
+    volumes:
+     - ./templates:/etc/nginx/templates
+    ports:
+     - '8081:8081'
+    environment:
+     - NGINX_PORT=8081
+     - APP_NAME=app-one
+     - COLOR=#6495ED
+    networks:
+      - nginx-playground-network
+
+  app-two:
+    image: nginx:1.21.0-alpine
+    container_name: app-two
+    hostname: app-two
+    volumes:
+     - ./templates:/etc/nginx/templates
+    ports:
+     - '8082:8082'
+    environment:
+     - NGINX_PORT=8082
+     - APP_NAME=app-two
+     - COLOR=#40E0D0
+    networks:
+      - nginx-playground-network
+
+  app-three:
+    image: nginx:1.21.0-alpine
+    container_name: app-three
+    hostname: app-three
+    volumes:
+     - ./templates:/etc/nginx/templates
+    ports:
+     - '8083:8083'
+    environment:
+     - NGINX_PORT=8083
+     - APP_NAME=app-three
+     - COLOR=#9FE2BF
+    networks:
+      - nginx-playground-network
+
+networks:
+  nginx-playground-network:
+    name: nginx-playground-network
+    external: true

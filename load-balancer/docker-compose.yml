@@ -1,0 +1,21 @@
+services:
+
+  load-balancer:
+    image: nginx:1.21.0-alpine
+    container_name: load-balancer
+    hostname: load-balancer
+    volumes:
+     - ./templates:/etc/nginx/templates
+    ports:
+     - '82:82'
+    environment:
+     - NGINX_PORT=82
+     - APP_NAME=load-balancer
+     - COLOR=#DCDCDC
+    networks:
+      - nginx-playground-network
+
+networks:
+  nginx-playground-network:
+    name: nginx-playground-network
+    external: true

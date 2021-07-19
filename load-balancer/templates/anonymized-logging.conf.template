@@ -1,0 +1,7 @@
+map $remote_addr $remote_addr_anonymous {
+    ~(?P<ip>\d+\.\d+\.\d+)\.    $ip.0;
+    ~(?P<ip>[^:]+:[^:]+):       $ip::;
+    default                     0.0.0.0;
+}
+
+log_format anonymized '[$time_local] $remote_addr_anonymous "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent"';

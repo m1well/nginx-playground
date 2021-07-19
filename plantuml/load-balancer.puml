@@ -1,0 +1,99 @@
+@startuml
+
+!$port_reverse_proxy = ":81"
+!$port_load_balancer = ":82"
+!$port_rate_limiter = ":83"
+!$port_dummy_1 = ":8081"
+!$port_dummy_2 = ":8082"
+!$port_dummy_3 = ":8083"
+
+title load-balancer
+
+skinparam roundcorner 10
+skinparam title {
+  fontsize 23
+  fontstyle bold
+}
+skinparam arrow {
+  color crimson
+  fontsize 14
+  fontcolor crimson
+  fontstyle italic
+}
+skinparam cloud {
+  backgroundcolor white
+  fontsize 14
+}
+skinparam frame {
+  backgroundcolor white
+  fontsize 14
+}
+skinparam queue {
+  backgroundcolor white
+  fontsize 14
+}
+skinparam artifact {
+  backgroundcolor skyblue
+  fontsize 17
+  fontstyle bold
+}
+
+cloud "172.99.0.1" as cloud {
+
+  frame "$port_load_balancer" as load_balancer {
+    artifact "nginx" as app_laod_balancer
+  }
+
+  queue "upstream" as round_robin {
+    interface "round robin" as upstream_round_robin
+  }
+
+  queue "upstream" as weights {
+    interface "weights" as upstream_weights
+  }
+
+  queue "upstream" as least_connection {
+    interface "least connection" as upstream_least_connection
+  }
+
+  queue "upstream" as ip_hash {
+    interface "ip hash" as upstream_ip_hash
+  }
+
+  frame "$port_dummy_1" as dummy_1 {
+    artifact "dummy app 1" as app_dummy_1
+  }
+
+  frame "$port_dummy_2" as dummy_2 {
+    artifact "dummy app 2" as app_dummy_2
+  }
+
+  frame "$port_dummy_3" as dummy_3 {
+    artifact "dummy app 3" as app_dummy_3
+  }
+
+}
+
+[app_laod_balancer] -[hidden]-- [upstream_round_robin]
+[app_laod_balancer] -[hidden]-- [upstream_weights]
+[app_laod_balancer] -[hidden]-- [upstream_least_connection]
+[app_laod_balancer] -[hidden]-- [upstream_ip_hash]
+
+[app_laod_balancer] <-down-> [upstream_round_robin] : location /balanced1
+[app_laod_balancer] <-down-> [upstream_weights] : location /balanced2
+[app_laod_balancer] <-down-> [upstream_least_connection] : location /balanced3
+[app_laod_balancer] <-down-> [upstream_ip_hash] : location /balanced4
+[upstream_round_robin] <-down-> [app_dummy_1]
+[upstream_round_robin] <-down-> [app_dummy_2]
+[upstream_round_robin] <-down-> [app_dummy_3]
+[upstream_weights] <-down-> [app_dummy_1]
+[upstream_weights] <-down-> [app_dummy_2] : weight 10
+[upstream_weights] <-down-> [app_dummy_3] : weight 5
+[upstream_least_connection] <-down-> [app_dummy_1]
+[upstream_least_connection] <-down-> [app_dummy_2]
+[upstream_least_connection] <-down-> [app_dummy_3]
+[upstream_ip_hash] <-down-> [app_dummy_1]
+[upstream_ip_hash] <-down-> [app_dummy_2]
+[upstream_ip_hash] <-down-> [app_dummy_3]
+
+@enduml

@@ -1,0 +1,32 @@
+# http section
+
+server_tokens off; # for security reasons you should not show your nginx version in the response headers
+
+server {
+
+    listen ${NGINX_PORT};
+    server_name localhost;
+
+    # only allow GET requests (and no e.g. POST requests)
+    if ($request_method !~ ^(GET|HEAD)$ ) {
+        return 444;
+    }
+
+    # every location routes to this page
+    location / {
+        default_type text/html; # needed because we directly return html text
+        return 200 "<!DOCTYPE html>
+                     <body style=\"width:400px;\">
+                       <h3 style=\"background-color:${COLOR};\">Hello from ${APP_NAME}</h3>
+                       <ul>
+                         <li>Scheme: $scheme</li>
+                         <li>Origin Host: $host (if forwarded in proxy)</li>
+                         <li>Servername: $server_name</li>
+                         <li><b>Port: $server_port</b></li>
+                         <li>Request: '$request'</li>
+                         <li>Current UTC Time: $time_local</li>
+                       </ul>
+                     </body>\n";
+    }
+
+}

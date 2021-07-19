@@ -1,0 +1,21 @@
+services:
+
+  reverse-proxy:
+    image: nginx:1.21.0-alpine
+    container_name: reverse-proxy
+    hostname: reverse-proxy
+    volumes:
+     - ./templates:/etc/nginx/templates
+    ports:
+     - '81:81'
+    environment:
+     - NGINX_PORT=81
+     - APP_NAME=reverse-proxy
+     - COLOR=#DCDCDC
+    networks:
+      - nginx-playground-network
+
+networks:
+  nginx-playground-network:
+    name: nginx-playground-network
+    external: true
